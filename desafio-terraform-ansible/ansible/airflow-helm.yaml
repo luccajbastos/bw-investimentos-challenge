@@ -1,0 +1,66 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    aws_region: us-east-1
+    eks_cluster_name: bwgi-dev-us-east-1-eks
+    airflow_namespace: airflow
+    subnets: "subnet-05f27a823717ce851,subnet-0af4de3d0d4a04a93"
+    k8s_context_name: "arn:aws:eks:us-east-1:988530097210:cluster/bwgi-dev-us-east-1-eks"
+  tasks:
+
+    - name: Update kubeconfig for EKS
+      ansible.builtin.command: >
+        aws eks update-kubeconfig
+        --name {{ eks_cluster_name }}
+        --region {{ aws_region }}
+      changed_when: false
+
+    - name: Add Helm Repository
+      kubernetes.core.helm_repository:
+        repo_name: apache-airflow
+        repo_url: https://airflow.apache.org
+
+    - name: Deploy Airflow via Helm
+      kubernetes.core.helm:
+        kube_context: "{{ k8s_context_name }}"
+        name: airflow
+        chart_ref: apache-airflow/airflow
+        release_namespace: "{{ airflow_namespace }}"
+        create_namespace: true
+        atomic: true
+        values:
+          executor: KubernetesExecutor
+          service:
+            type: LoadBalancer
+
+    - name: Create a Kubernetes Ingress
+      kubernetes.core.k8s:
+        kube_context: "{{ k8s_context_name }}"
+        state: present
+        apply: yes
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: airflow-ingress 
+            namespace: airflow
+            annotations:
+              kubernetes.io/ingress.class: alb
+              alb.ingress.kubernetes.io/scheme: internet-facing
+              alb.ingress.kubernetes.io/load-balancer-name: airflow-alb
+              alb.ingress.kubernetes.io/target-type: ip
+              alb.ingress.kubernetes.io/group.name: airflow
+              alb.ingress.kubernetes.io/group.order: '1'
+              alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+              alb.ingress.kubernetes.io/subnets: '{{ subnets }}'
+              alb.ingress.kubernetes.io/security-groups: ''
+              alb.ingress.kubernetes.io/healthcheck-path: '/health'
+              alb.ingress.kubernetes.io/healthcheck-protocol: 'HTTP'
+              alb.ingress.kubernetes.io/healthcheck-port: '8080'
+          spec:
+            defaultBackend:
+              service:
+                name: airflow-webserver
+                port:
+                  number: 8080
