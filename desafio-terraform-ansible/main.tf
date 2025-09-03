@@ -45,6 +45,7 @@ module "eks" {
 }
 
 module "aws-alb-controller" {
+  depends_on = [ module.eks ]
   source = "./modules/alb-controller-helm"
 
   aws_region = local.region

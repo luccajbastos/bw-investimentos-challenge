@@ -2,11 +2,10 @@
   connection: local
   gather_facts: no
   vars:
-    aws_region: us-east-1
-    eks_cluster_name: bwgi-dev-us-east-1-eks
+    aws_region: us-east-1 # Alterar aqui após o Apply
+    eks_cluster_name: bwgi-dev-us-east-1-eks # Alterar aqui após o Apply
     airflow_namespace: airflow
-    subnets: "subnet-05f27a823717ce851,subnet-0af4de3d0d4a04a93"
-    k8s_context_name: "arn:aws:eks:us-east-1:988530097210:cluster/bwgi-dev-us-east-1-eks"
+    alb_subnets: "subnet-05e430864dbbea379,subnet-0634c7f910afd403b" # Alterar aqui após o Apply
   tasks:
 
     - name: Update kubeconfig for EKS
@@ -16,27 +15,39 @@
         --region {{ aws_region }}
       changed_when: false
 
-    - name: Add Helm Repository
+    - name: Add Airflow Helm Repository
       kubernetes.core.helm_repository:
-        repo_name: apache-airflow
-        repo_url: https://airflow.apache.org
+        repo_name: airflow-helm
+        repo_url: https://airflow-helm.github.io/charts
 
     - name: Deploy Airflow via Helm
       kubernetes.core.helm:
-        kube_context: "{{ k8s_context_name }}"
         name: airflow
-        chart_ref: apache-airflow/airflow
+        chart_ref: airflow-helm/airflow
         release_namespace: "{{ airflow_namespace }}"
-        create_namespace: true
+        create_namespace: false
         atomic: true
         values:
-          executor: KubernetesExecutor
-          service:
-            type: LoadBalancer
+          logs:
+            ## the airflow logs folder
+            # path: /opt/airflow/logs
+            persistence:
+              enabled: false
+          dags:
+            persistence:
+              enabled: false
+          postgresql:
+            enabled: true
+            persistence:
+              enabled: false
+              storageClass: ""
+          redis:
+            enabled: true
+            persistence:
+              enabled: false
 
     - name: Create a Kubernetes Ingress
       kubernetes.core.k8s:
-        kube_context: "{{ k8s_context_name }}"
         state: present
         apply: yes
         definition:
@@ -44,7 +55,7 @@
           kind: Ingress
           metadata:
             name: airflow-ingress 
-            namespace: airflow
+            namespace: "{{ airflow_namespace }}"
             annotations:
               kubernetes.io/ingress.class: alb
               alb.ingress.kubernetes.io/scheme: internet-facing
@@ -53,7 +64,7 @@
               alb.ingress.kubernetes.io/group.name: airflow
               alb.ingress.kubernetes.io/group.order: '1'
               alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
-              alb.ingress.kubernetes.io/subnets: '{{ subnets }}'
+              alb.ingress.kubernetes.io/subnets: '{{ alb_subnets }}'
               alb.ingress.kubernetes.io/security-groups: ''
               alb.ingress.kubernetes.io/healthcheck-path: '/health'
               alb.ingress.kubernetes.io/healthcheck-protocol: 'HTTP'
@@ -61,6 +72,6 @@
           spec:
             defaultBackend:
               service:
-                name: airflow-webserver
+                name: airflow-web
                 port:
                   number: 8080

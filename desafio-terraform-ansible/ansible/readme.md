@@ -30,3 +30,9 @@
 - Ver coleções já instaladas: ansible-galaxy collection list
 - Atualizar uma coleção: ansible-galaxy collection install nome.da.collection --upgrade
 - Remover: rm -rf ~/.ansible/collections/ansible_collections/nome/da/collection
+- ansible-playbook -i localhost, ../playbook.yaml
+
+
+### Links
+- https://galaxy.ansible.com/ui/collections/
+- https://artifacthub.io/packages/helm/apache-airflow/airflow?modal=values-schema&path=postgresql

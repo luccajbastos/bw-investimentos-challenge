@@ -16,6 +16,9 @@ module "eks" {
     vpc-cni                = {
       before_compute = true
     }
+    aws-ebs-csi-driver = {
+      before_compute = false
+    }
   }
 
   enable_kms_key_rotation = false
