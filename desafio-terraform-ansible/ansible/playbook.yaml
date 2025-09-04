@@ -5,7 +5,7 @@
     aws_region: us-east-1 # Alterar aqui após o Apply
     eks_cluster_name: bwgi-dev-us-east-1-eks # Alterar aqui após o Apply
     airflow_namespace: airflow
-    alb_subnets: "subnet-05e430864dbbea379,subnet-0634c7f910afd403b" # Alterar aqui após o Apply
+    alb_subnets: "subnet-0c8d5b135af8e7d77,subnet-0c13bc3914d51adfc" # Alterar aqui após o Apply
   tasks:
 
     - name: Update kubeconfig for EKS
@@ -25,7 +25,7 @@
         name: airflow
         chart_ref: airflow-helm/airflow
         release_namespace: "{{ airflow_namespace }}"
-        create_namespace: false
+        create_namespace: true
         atomic: true
         values:
           logs:
@@ -33,6 +33,10 @@
             # path: /opt/airflow/logs
             persistence:
               enabled: false
+          airflow:
+            image:
+              repository: apache/airflow
+              tag: 2.10.5-python3.9
           dags:
             persistence:
               enabled: false
