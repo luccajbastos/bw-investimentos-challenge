@@ -35,6 +35,10 @@ Componentes:
 - Pods Airflow: webserver, scheduler, workers, triggerer, migrations, sync.  
 - Banco de metadados: Postgres (sem persistência).  
 
+## Calculadora AWS do ambiente
+
+https://calculator.aws/#/estimate?id=84b0ae37b53acd6f4783ff74020eb6d82eb94df9
+
 ## 3. Ansible
 
 Pontos principais
