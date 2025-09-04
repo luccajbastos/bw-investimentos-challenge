@@ -14,7 +14,7 @@ Versão do Airflow requerida: `2.10.5` com `Python 3.9` (usar imagem oficial do 
 ## 2. Arquitetura
 
 ### 2.1 Arquitetura AWS (visão geral)
-(Imagem: `assets/AWS.jpg`)
+![(Imagem: `assets/AWS.jpg`)](assets/AWS.jpg)
 
 Componentes principais:
 - VPC com subnets públicas e privadas.  
@@ -25,7 +25,7 @@ Componentes principais:
 - IAM Roles: cluster role, node role, IRSA para pods acessarem AWS APIs.  
 
 ### 2.2 Arquitetura Kubernetes
-(Imagem: `assets/K8S.jpg`)
+![(Imagem: `assets/K8S.jpg`)](assets/K8S.jpg)
 
 Componentes:
 - Ingress Controller: AWS Load Balancer Controller (ALB ingress) para integrar ALB ao Kubernetes.  
@@ -50,6 +50,7 @@ Comandos
 - kubectl e helm instalados.
 
 ### Passo-a-passo
+- Colar as credenciais da AWS no terminal ou criar um profile com um IAM User
 - terraform init
 - terraform plan -var-file=default.tfvars
 - terraform apply -var-file=default.tfvars
